@@ -25,6 +25,50 @@ module.exports = function (game) {
         
         game.control(physics);
         
+        var DT_CHECK_CAMERA_OUTSIDE = 33;
+        var MAX_CAMERA_OUTSIDE_POSITION_Z = player.cameraOutside.position.z;
+        var MIN_CAMERA_OUTSIDE_POSITION_Z = Math.min(25, player.cameraOutside.position.z);
+        var accumulatedDtCameraOutside = 0;
+
+        var distanceVectors = function (a, b) {
+            var x = (a[0] - b[0]) * (a[0] - b[0]);
+            var y = (a[1] - b[1]) * (a[1] - b[1]);
+            var z = (a[2] - b[2]) * (a[2] - b[2]);
+            return Math.sqrt(x + y + z);
+        };
+
+        var differenceVectors = function (a, b) {
+            var result = [];
+            result[0] = a[0] - b[0];
+            result[1] = a[1] - b[1];
+            result[2] = a[2] - b[2];
+            return result;
+        };
+
+        game.on('tick', function (delta) {
+            if (possessed == player.cameraOutside) {
+                accumulatedDtCameraOutside += delta;
+                if (accumulatedDtCameraOutside > DT_CHECK_CAMERA_OUTSIDE) {
+                    var cameraOutside = player.cameraOutside;
+                    var cameraOutsidePosition = game.cameraPosition();
+                    var playerPosition = game.playerPosition();
+                    var playerHeight = physics.dimensions[1];
+                    playerPosition[1] += playerHeight;
+                    var raycastDirection = differenceVectors(cameraOutsidePosition, playerPosition);
+
+                    var raycast = game.raycastVoxels(playerPosition, raycastDirection, cameraOutside.position.z * skinOpts.scale.z + 2);
+                    if (raycast) {
+                        var distance = distanceVectors(raycast.position, playerPosition);
+                        var cameraPositionZDesired = (distance - 1) / skinOpts.scale.z;
+                        cameraOutside.position.z = Math.min(Math.max(cameraPositionZDesired, MIN_CAMERA_OUTSIDE_POSITION_Z), MAX_CAMERA_OUTSIDE_POSITION_Z);
+                    } else {
+                        cameraOutside.position.z = MAX_CAMERA_OUTSIDE_POSITION_Z;
+                    }
+                    accumulatedDtCameraOutside = 0;
+                }
+            }
+        });
+
         physics.move = function (x, y, z) {
             var xyz = parseXYZ(x, y, z);
             physics.yaw.position.x += xyz.x;
