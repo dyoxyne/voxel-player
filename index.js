@@ -27,7 +27,7 @@ module.exports = function (game) {
         
         var DT_CHECK_CAMERA_OUTSIDE = 33;
         var MAX_CAMERA_OUTSIDE_POSITION_Z = player.cameraOutside.position.z;
-        var MIN_CAMERA_OUTSIDE_POSITION_Z = Math.min(8, player.cameraOutside.position.z);
+        var THRESHOLD_CAMERA_OUTSIDE_POSITION_Z = 5;
         var accumulatedDtCameraOutside = 0;
 
         var distanceVectors = function (a, b) {
@@ -59,7 +59,10 @@ module.exports = function (game) {
                     if (raycast) {
                         var distance = distanceVectors(raycast.position, playerPosition);
                         var cameraPositionZDesired = (distance - 1) / skinOpts.scale.z;
-                        cameraOutside.position.z = Math.min(Math.max(cameraPositionZDesired, MIN_CAMERA_OUTSIDE_POSITION_Z), MAX_CAMERA_OUTSIDE_POSITION_Z);
+                        cameraOutside.position.z = Math.min(cameraPositionZDesired, MAX_CAMERA_OUTSIDE_POSITION_Z);
+                        if (cameraOutside.position.z <= THRESHOLD_CAMERA_OUTSIDE_POSITION_Z) {
+                            cameraOutside.position.z = 0
+                        }
                     } else {
                         cameraOutside.position.z = MAX_CAMERA_OUTSIDE_POSITION_Z;
                     }
