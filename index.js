@@ -25,43 +25,28 @@ module.exports = function (game) {
         
         game.control(physics);
         
-        var DT_CHECK_CAMERA_OUTSIDE = 33;
-        var MAX_CAMERA_OUTSIDE_POSITION_Z = player.cameraOutside.position.z;
-        var THRESHOLD_CAMERA_OUTSIDE_POSITION_Z = 5;
+        const DT_CHECK_CAMERA_OUTSIDE = 33,
+              MAX_CAMERA_OUTSIDE_POSITION_Z = player.cameraOutside.position.z,
+              THRESHOLD_CAMERA_OUTSIDE_POSITION_Z = 5;
         var accumulatedDtCameraOutside = 0;
-
-        var distanceVectors = function (a, b) {
-            var x = (a[0] - b[0]) * (a[0] - b[0]);
-            var y = (a[1] - b[1]) * (a[1] - b[1]);
-            var z = (a[2] - b[2]) * (a[2] - b[2]);
-            return Math.sqrt(x + y + z);
-        };
-
-        var scaleVector = function(a, k) {
-            var result = [];
-            result[0] = a[0] * k;
-            result[1] = a[1] * k;
-            result[2] = a[2] * k;
-            return result;
-        }
 
         game.on('tick', function (delta) {
             if (possessed == player.cameraOutside) {
                 accumulatedDtCameraOutside += delta;
-                if (accumulatedDtCameraOutside > DT_CHECK_CAMERA_OUTSIDE) {
-                    var cameraOutside = player.cameraOutside;
-                    var cameraOutsidePosition = game.cameraPosition();
+                if (accumulatedDtCameraOutside > DT_CHECK_CAMERA_OUTSIDE) {  
                     var playerPosition = game.playerPosition();
                     var playerHeight = physics.dimensions[1];
-                    playerPosition[1] += Math.floor(playerHeight)
-                    var raycastDirection = scaleVector(game.cameraVector(), -1)
+                    playerPosition[1] += Math.floor(playerHeight);
+
+                    var cameraOutside = player.cameraOutside;
+                    var raycastDirection = scaleVector(game.cameraVector(), -1);
                     var raycast = game.raycastVoxels(playerPosition, raycastDirection, cameraOutside.position.z * skinOpts.scale.z + 2);
                     if (raycast) {
                         var distance = distanceVectors(raycast.position, playerPosition);
                         var cameraPositionZDesired = (distance - 1) / skinOpts.scale.z;
                         cameraOutside.position.z = Math.min(cameraPositionZDesired, MAX_CAMERA_OUTSIDE_POSITION_Z);
                         if (cameraOutside.position.z <= THRESHOLD_CAMERA_OUTSIDE_POSITION_Z) {
-                            cameraOutside.position.z = 0
+                            cameraOutside.position.z = 0;
                         }
                     } else {
                         cameraOutside.position.z = MAX_CAMERA_OUTSIDE_POSITION_Z;
@@ -121,4 +106,19 @@ function parseXYZ (x, y, z) {
         return { x: x.x || 0, y: x.y || 0, z: x.z || 0 };
     }
     return { x: Number(x), y: Number(y), z: Number(z) };
+}
+
+function distanceVectors (a, b) {
+    var x = (a[0] - b[0]) * (a[0] - b[0]);
+    var y = (a[1] - b[1]) * (a[1] - b[1]);
+    var z = (a[2] - b[2]) * (a[2] - b[2]);
+    return Math.sqrt(x + y + z);
+}
+
+function scaleVector (a, k) {
+    var result = [];
+    result[0] = a[0] * k;
+    result[1] = a[1] * k;
+    result[2] = a[2] * k;
+    return result;
 }
